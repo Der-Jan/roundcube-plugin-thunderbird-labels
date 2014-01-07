@@ -1,6 +1,6 @@
 /**
  * Version:
- * $Revision: 26 $
+ * $Revision$
  * Author:
  * Michael Kefeder
  * http://code.google.com/p/rcmail-thunderbird-labels/
@@ -11,17 +11,11 @@ rcmail.tb_label_no = '';
 
 function rcmail_tb_label_menu(p)
 {
-	if (typeof rcmail_ui == "undefined")
-		rcmail_ui = UI;
-	if (!rcmail_ui.check_tb_popup())
+	if (!rcmail_ui.popups.tb_label_popup)
 		rcmail_ui.tb_label_popup_add();
 	
 	// Show the popup menu with tags
-	// -- skin larry vs classic
-	if (typeof rcmail_ui.show_popupmenu == "undefined")
-		rcmail_ui.show_popup('tb_label_popup');
-	else
-		rcmail_ui.show_popupmenu('tb_label_popup');
+	rcmail_ui.show_popupmenu('tb_label_popup');
 
 	return false;
 }
@@ -46,19 +40,13 @@ function rcm_tb_label_insert(uid, row)
 */
 function rcm_tb_label_submenu(p)
 {
-	if (typeof rcmail_ui == "undefined")
-		rcmail_ui = UI;
 	// setup onclick and active/non active classes
 	rcm_tb_label_create_popupmenu();
 	
 	// -- create sensible popup, using roundcubes internals
-	if (!rcmail_ui.check_tb_popup())
+	if (!rcmail_ui.popups.tb_label_popup)
 		rcmail_ui.tb_label_popup_add();
-	// -- skin larry vs classic
-	if (typeof rcmail_ui.show_popupmenu == "undefined")
-		rcmail_ui.show_popup('tb_label_popup');
-	else
-		rcmail_ui.show_popupmenu('tb_label_popup');
+	rcmail_ui.show_popupmenu('tb_label_popup');
 	return false;
 }
 
@@ -291,19 +279,15 @@ function rcmail_ctxm_label_set(which)
 
 $(document).ready(function() {
 	rcm_tb_label_init_onclick();
-	// add keyboard shortcuts for normal keyboard and keypad
+	// add keyboard shortcuts
 	$(document).keyup(function(e) {
 		//console.log('Handler for .keyup() called.' + e.which);
-		var k = e.which;
-		if ((k > 47 && k < 58) || (k > 95 && k < 106))
+		var label_no = e.which - 48;
+		var cur_a = $('#tb_label_popup li.label' + label_no +' a');
+		
+		if (cur_a)
 		{
-			var label_no = k % 48;
-			var cur_a = $('#tb_label_popup li.label' + label_no + ' a');
-			
-			if (cur_a)
-			{
-				cur_a.click();
-			}
+			cur_a.click();
 		}
 	});
 	
@@ -341,10 +325,13 @@ $(document).ready(function() {
 		rcmail.register_command('plugin.thunderbird_labels.rcm_tb_label_submenu', rcm_tb_label_submenu, true);
 	});
 	
-	// -- add my submenu to roundcubes UI (for roundcube classic only?)
+	// -- add my submenu to roundcubes UI
 	if (window.rcube_mail_ui)
 	rcube_mail_ui.prototype.tb_label_popup_add = function() {
-		add = {
+/*console.log("tb_label_popup_add");
+		if (this.popups.tb_label_popup)
+			return;
+*/		add = {
 			tb_label_popup:     {id:'tb_label_popup'}
 		};
 		this.popups = $.extend(this.popups, add);
@@ -353,17 +340,6 @@ $(document).ready(function() {
 			this.popups.tb_label_popup.obj = obj;
 		else
 			delete this.popups.tb_label_popup;
-	};
-	
-	if (window.rcube_mail_ui)
-	rcube_mail_ui.prototype.check_tb_popup = function() {
-		// larry skin doesn't have that variable, popup works automagically, return true
-		if (typeof this.popups == 'undefined')
-			return true;
-		if (this.popups.tb_label_popup)
-			return true;
-		else
-			return false;
 	};
 });
 

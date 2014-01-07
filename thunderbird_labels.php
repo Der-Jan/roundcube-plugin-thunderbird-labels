@@ -4,7 +4,7 @@
  *
  * Plugin to show the 5 Message Labels Thunderbird Email-Client provides for IMAP
  *
- * @version $Revision: 24 $
+ * @version $Revision$
  * @author Michael Kefeder
  * @url http://code.google.com/p/rcmail-thunderbird-labels/
  */
@@ -47,17 +47,14 @@ class thunderbird_labels extends rcube_plugin
 				'title' => 'label', # gets translated
 				'domain' => $this->ID,
 				'type' => 'link',
-				'content' => ' ', # maybe put translated version of "Labels" here?
-				'class' => ($rcmail->config->get('skin') == 'larry') ? 'button' : 'tb_noclass',
+				'content' => ' '
 			),
 			'toolbar'
 		);
 		
 		$this->register_action('plugin.thunderbird_labels.set_flags', array($this, 'set_flags'));
 		
-		
 		if (method_exists($this, 'require_plugin')
-			&& in_array('contextmenu', $rcmail->config->get('plugins'))
 			&& $this->require_plugin('contextmenu'))
 		{
 			if ($rcmail->action == '')
