@@ -82,7 +82,8 @@ table.label5
 #messagelist tr.label1 td,
 #messagelist tr.label1 td a,
 .toolbarmenu li.label1,
-.toolbarmenu li.label1 a.active
+.toolbarmenu li.label1 a.active,
+span.label1
 {
   color: #FF0000;
 }
@@ -90,7 +91,8 @@ table.label5
 #messagelist tr.label2 td,
 #messagelist tr.label2 td a,
 .toolbarmenu li.label2,
-.toolbarmenu li.label2 a.active
+.toolbarmenu li.label2 a.active,
+span.label2
 {
   color: #FF9900;
 }
@@ -98,7 +100,8 @@ table.label5
 #messagelist tr.label3 td,
 #messagelist tr.label3 td a,
 .toolbarmenu li.label3,
-.toolbarmenu li.label3 a.active
+.toolbarmenu li.label3 a.active,
+span.label3
 {
   color: #009900;
 }
@@ -106,7 +109,8 @@ table.label5
 #messagelist tr.label4 td,
 #messagelist tr.label4 td a,
 .toolbarmenu li.label4,
-.toolbarmenu li.label4 a.active
+.toolbarmenu li.label4 a.active,
+span.label4
 {
   color: #3333FF;
 }
@@ -114,7 +118,8 @@ table.label5
 #messagelist tr.label5 td,
 #messagelist tr.label5 td a,
 .toolbarmenu li.label5,
-.toolbarmenu li.label5 a.active
+.toolbarmenu li.label5 a.active,
+span.label5
 {
   color: #993399;
 }
@@ -154,6 +159,67 @@ table.label5
   color: #FFFFFF;
   background-color: #993399;
 }
+
+span.tb_label_dots {
+float: right;
+height: 0px;
+display: block;
+position:relative;
+top: 6px;
+}
+
+/* hack for firefox : doesnt display the bullets at the correct height */
+@-moz-document url-prefix() {
+  span.tb_label_dots {
+    top: -12px;
+  }
+}
+
+span.tb_label_dots span {
+  font-size: 32px;
+  vertical-align: middle;
+  line-height: 0px;
+}
+
+
+div#labelbox {
+  white-space: nowrap;
+  position: absolute;
+  right: 5%;
+  top: 0px;
+}
+
+
+div#labelbox span {
+    margin: 0 3px;
+    padding: 2px;
+    border: 1px solid black;
+    border-radius: 3px;
+    color: #black;
+    font-weight: bold;
+    font-size: 11px;
+}
+  
+div#labelbox span.tb_label_span1 {
+  background-color: #FF2200;
+}
+
+div#labelbox span.tb_label_span2 {
+  background-color: #FF9900;
+}
+
+div#labelbox span.tb_label_span3 {
+  background-color: #00CC00;
+}
+
+div#labelbox span.tb_label_span4 {
+  background-color: #0CF;
+}
+
+div#labelbox span.tb_label_span5 {
+  background-color: #FF33FF;
+}  
+
 
 /* Non-labeled selected message: changed to make it look "like" Thunderbird */
 /*#messagelist tr.selected td

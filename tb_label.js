@@ -11,27 +11,49 @@ rcmail.tb_label_no = '';
 
 function rcmail_tb_label_menu(p)
 {
-	if (!rcmail_ui.popups.tb_label_popup)
+	if (typeof rcmail_ui == "undefined")
+		rcmail_ui = UI;
+	if (!rcmail_ui.check_tb_popup())
 		rcmail_ui.tb_label_popup_add();
 	
 	// Show the popup menu with tags
-	rcmail_ui.show_popupmenu('tb_label_popup');
+	// -- skin larry vs classic
+	if (typeof rcmail_ui.show_popupmenu == "undefined")
+		rcmail_ui.show_popup('tb_label_popup');
+	else
+		rcmail_ui.show_popupmenu('tb_label_popup');
 
 	return false;
 }
 
 /**
 * Shows the colors based on flag info like in Thunderbird
+* (called when a new message in inserted in list of messages)
+* maybe slow ? called for each message in mailbox at init
 */
 function rcm_tb_label_insert(uid, row)
 {
 	var message = rcmail.env.messages[uid];
+	var rowobj = $(row.obj);
+	// add span container for little colored bullets
+	rowobj.find("td.subject").append("<span class='tb_label_dots'></span>");
 	
-	if (message.flags && message.flags.tb_labels)
-	{
-		var rowobj = $(row.obj);
-		for (idx in message.flags.tb_labels)
-			rowobj.addClass('label' + message.flags.tb_labels[idx]);
+	if (message.flags && message.flags.tb_labels) {
+	  if (message.flags.tb_labels.length) {
+  	  var spanobj = rowobj.find("td.subject span.tb_label_dots");
+  	  message.flags.tb_labels.sort(function(a,b) {return a-b;});
+  	  if (rcmail.env.tb_label_style=='bullets') {
+  	    // bullets UI style
+        for (idx in message.flags.tb_labels) {
+          spanobj.append("<span class='label"+message.flags.tb_labels[idx]+"'>&#8226;</span>");
+        }
+      } else {
+        // thunderbird UI style
+        for (idx in message.flags.tb_labels) {
+          rowobj.addClass('label' + message.flags.tb_labels[idx]);
+        }
+      }
+		}
 	}
 }
 
@@ -40,13 +62,19 @@ function rcm_tb_label_insert(uid, row)
 */
 function rcm_tb_label_submenu(p)
 {
+	if (typeof rcmail_ui == "undefined")
+		rcmail_ui = UI;
 	// setup onclick and active/non active classes
 	rcm_tb_label_create_popupmenu();
 	
 	// -- create sensible popup, using roundcubes internals
-	if (!rcmail_ui.popups.tb_label_popup)
+	if (!rcmail_ui.check_tb_popup())
 		rcmail_ui.tb_label_popup_add();
-	rcmail_ui.show_popupmenu('tb_label_popup');
+	// -- skin larry vs classic
+	if (typeof rcmail_ui.show_popupmenu == "undefined")
+		rcmail_ui.show_popup('tb_label_popup');
+	else
+		rcmail_ui.show_popupmenu('tb_label_popup');
 	return false;
 }
 
@@ -65,26 +93,35 @@ function rcm_tb_label_flag_toggle(flag_uids, toggle_label_no, onoff)
 		&& !headers_table)
 		return;
 	// for single message view
-	if (headers_table.length && flag_uids.length)
-	{
-		if (onoff == true)
-		{
-			// add color
-			headers_table.addClass('label'+toggle_label_no);
+	if (headers_table.length && flag_uids.length) {
+		if (onoff == true) {
+		  if (rcmail.env.tb_label_style=='bullets') {
+		    $('#labelbox').append("<span class='tb_label_span"+toggle_label_no+"'>" +
+			    rcmail.env.tb_label_custom_labels[toggle_label_no] + "</span>");
+		  } else {
+		    headers_table.addClass('label'+toggle_label_no);
+		  }
 			// add to flag list
 			tb_labels_for_message.push(toggle_label_no);
+			
 		}
 		else
 		{
-			// remove color
-			headers_table.removeClass('label'+toggle_label_no);
+			if (rcmail.env.tb_label_style=='bullets') {
+			  $("span.tb_label_span"+toggle_label_no).remove();
+			} else {
+			  headers_table.removeClass('label'+toggle_label_no);
+			}
+			
 			var pos = jQuery.inArray(toggle_label_no, tb_labels_for_message);
-			if (pos > -1)
+			if (pos > -1) {
 				tb_labels_for_message.splice(pos, 1);
+			}
 		}
 		// exit function when in detail mode. when preview is active keep going
-		if (!rcmail.env.messages)
+		if (!rcmail.env.messages) {
 			return;
+		}
 	}
 	jQuery.each(flag_uids, function (idx, uid) {
 			var message = rcmail.env.messages[uid];
@@ -93,7 +130,13 @@ function rcm_tb_label_flag_toggle(flag_uids, toggle_label_no, onoff)
 			{
 				// add colors
 				var rowobj = $(row.obj);
-				rowobj.addClass('label'+toggle_label_no);
+				var spanobj = rowobj.find("td.subject span.tb_label_dots");
+				if (rcmail.env.tb_label_style=='bullets') {
+				  spanobj.append("<span class='label"+toggle_label_no+"'>&#8226;</span>");
+				} else {
+				  rowobj.addClass('label'+toggle_label_no);
+				}
+				
 				// add to flag list
 				message.flags.tb_labels.push(toggle_label_no);
 			}
@@ -101,7 +144,12 @@ function rcm_tb_label_flag_toggle(flag_uids, toggle_label_no, onoff)
 			{
 				// remove colors
 				var rowobj = $(row.obj);
-				rowobj.removeClass('label'+toggle_label_no);
+				if (rcmail.env.tb_label_style=='bullets') {
+				  rowobj.find("td.subject span.tb_label_dots span.label"+toggle_label_no).remove();
+				} else {
+				  rowobj.removeClass('label'+toggle_label_no);
+				}
+				
 				// remove from flag list
 				var pos = jQuery.inArray(toggle_label_no, message.flags.tb_labels);
 				if (pos > -1)
@@ -149,6 +197,7 @@ function rcm_tb_label_init_onclick()
 {
 	for (i = 0; i < 6; i++)
 	{
+	  // find the "HTML a tags" of tb-label submenus
 		var cur_a = $('#tb_label_popup li.label' + i +' a');
 	
 		// TODO check if click event is defined instead of unbinding?
@@ -240,6 +289,7 @@ function rcm_tb_label_init_onclick()
 					var str_unflag_uids = unflag_uids.join(',');
 					
 					var lock = rcmail.set_busy(true, 'loading');
+					// call PHP set_flags to set the flags in IMAP server
 					rcmail.http_request('plugin.thunderbird_labels.set_flags', '_flag_uids=' + str_flag_uids + '&_unflag_uids=' + str_unflag_uids + '&_mbox=' + urlencode(rcmail.env.mailbox) + "&_toggle_label=" + toggle_label, lock);
 					
 					// remove/add classes and tb labels from messages in JS
@@ -279,17 +329,23 @@ function rcmail_ctxm_label_set(which)
 
 $(document).ready(function() {
 	rcm_tb_label_init_onclick();
-	// add keyboard shortcuts
-	$(document).keyup(function(e) {
-		//console.log('Handler for .keyup() called.' + e.which);
-		var label_no = e.which - 48;
-		var cur_a = $('#tb_label_popup li.label' + label_no +' a');
-		
-		if (cur_a)
-		{
-			cur_a.click();
-		}
-	});
+	// add keyboard shortcuts for keyboard and keypad if pref tb_label_enable_shortcuts=true
+	if (rcmail.env.tb_label_enable_shortcuts) {
+    $(document).keyup(function(e) {
+      //console.log('Handler for .keyup() called.' + e.which);
+      var k = e.which;
+      if ((k > 47 && k < 58) || (k > 95 && k < 106))
+      {
+        var label_no = k % 48;
+        var cur_a = $('#tb_label_popup li.label' + label_no + ' a');
+      
+        if (cur_a)
+        {
+          cur_a.click();
+        }
+      }
+    });
+  }
 	
 	// if exists add contextmenu entries
 	if (window.rcm_contextmenu_register_command) {
@@ -299,6 +355,12 @@ $(document).ready(function() {
 	// single message displayed?
 	if (window.tb_labels_for_message)
 	{
+	  var labelbox_parent = $('div.message-headers'); // larry skin
+	  if (!labelbox_parent.length) {
+	      labelbox_parent = $("table.headers-table tbody tr:first-child"); // classic skin
+	  }
+	  labelbox_parent.append("<div id='labelbox'></div>");
+	  tb_labels_for_message.sort(function(a,b) {return a-b;});
 		jQuery.each(tb_labels_for_message, function(idx, val)
 			{
 				rcm_tb_label_flag_msgs([-1,], val);
@@ -325,13 +387,10 @@ $(document).ready(function() {
 		rcmail.register_command('plugin.thunderbird_labels.rcm_tb_label_submenu', rcm_tb_label_submenu, true);
 	});
 	
-	// -- add my submenu to roundcubes UI
+	// -- add my submenu to roundcubes UI (for roundcube classic only?)
 	if (window.rcube_mail_ui)
 	rcube_mail_ui.prototype.tb_label_popup_add = function() {
-/*console.log("tb_label_popup_add");
-		if (this.popups.tb_label_popup)
-			return;
-*/		add = {
+		add = {
 			tb_label_popup:     {id:'tb_label_popup'}
 		};
 		this.popups = $.extend(this.popups, add);
@@ -341,5 +400,17 @@ $(document).ready(function() {
 		else
 			delete this.popups.tb_label_popup;
 	};
+	
+	if (window.rcube_mail_ui)
+	rcube_mail_ui.prototype.check_tb_popup = function() {
+		// larry skin doesn't have that variable, popup works automagically, return true
+		if (typeof this.popups == 'undefined')
+			return true;
+		if (this.popups.tb_label_popup)
+			return true;
+		else
+			return false;
+	};
+	
 });
 
